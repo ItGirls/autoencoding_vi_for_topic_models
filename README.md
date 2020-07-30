@@ -31,4 +31,13 @@ Similarly for `NVLDA`:
 
 Check `run.py` for other options.
 
+train: 
+ CUDA_VISIBLE_DEVICES=0 python2 run_with_saver_and_loader.py -m prodlda -f 100 -s 100 -t 50 -b 200 -r 0.002 -e 200 -o train -q checkpoint/model.ckpt
+
+
+test:
+
+CUDA_VISIBLE_DEVICES=0 python2 run_with_saver_and_loader.py -m prodlda -f 100 -s 100 -t 50 -b 200 -r 0.002 -e 200 -o test -q checkpoint/model.ckpt
+
+
 
