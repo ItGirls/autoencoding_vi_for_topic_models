@@ -73,7 +73,7 @@ class VAE(object):
                                dtype=tf.float32)
         # 通过参数变化获得z的分布的采样结果
         self.z = tf.add(self.z_mean,
-                        tf.multiply(tf.sqrt(tf.exp(self.z_log_sigma_sq)), eps),name="z")
+                        tf.multiply(tf.sqrt(tf.exp(self.z_log_sigma_sq)), eps))
         # 方差
         self.sigma = tf.exp(self.z_log_sigma_sq)
 
@@ -98,7 +98,7 @@ class VAE(object):
             'out_mean': tf.Variable(tf.zeros([n_z], dtype=tf.float32)),
             'out_log_sigma': tf.Variable(tf.zeros([n_z], dtype=tf.float32))}
         all_weights['weights_gener'] = {
-            'h2': tf.Variable(xavier_init(n_z, n_hidden_gener_1), name="topic_word")}
+            'h2': tf.Variable(xavier_init(n_z, n_hidden_gener_1))}
 
         return all_weights
 
@@ -139,9 +139,7 @@ class VAE(object):
                                                        (self.mu2 - self.z_mean)), 1) - self.h_dim + \
                              tf.reduce_sum(tf.log(self.var2), 1) - tf.reduce_sum(self.z_log_sigma_sq, 1))
 
-        # self.cost = tf.reduce_mean(reconstr_loss) + tf.reduce_mean(latent_loss)  # average over batch
-        self.cost = tf.add(tf.reduce_mean(reconstr_loss), tf.reduce_mean(latent_loss),
-                           name="cost")  # average over batch
+        self.cost = tf.reduce_mean(reconstr_loss) + tf.reduce_mean(latent_loss)  # average over batch
 
         self.optimizer = \
             tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.99).minimize(self.cost)
@@ -164,4 +162,18 @@ class VAE(object):
         获得文档的主题
         """
         theta_ = self.sess.run((self.z), feed_dict={self.x: np.expand_dims(X, axis=0), self.keep_prob: 1.0})
+        return theta_
+
+    def test1(self, X, sess):
+        """Test the model and return the lowerbound on the log-likelihood.
+        对数似然的边分下界为损失函数，损失最终需要平摊到每个词上
+        """
+        cost = sess.run((self.cost), feed_dict={self.x: np.expand_dims(X, axis=0), self.keep_prob: 1.0})
+        return cost
+
+    def topic_prop1(self, X, sess):
+        """heta_ is the topic proportion vector. Apply softmax transformation to it before use.
+        获得文档的主题
+        """
+        theta_ = sess.run((self.z), feed_dict={self.x: np.expand_dims(X, axis=0), self.keep_prob: 1.0})
         return theta_
