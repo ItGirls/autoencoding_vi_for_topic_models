@@ -10,7 +10,7 @@ import tensorflow as tf
 # import matplotlib.pyplot as plt
 import pickle
 import sys, getopt
-from models import prodlda_, nvlda
+from models import prodlda_, nvlda_
 
 tf_config = tf.ConfigProto(allow_soft_placement=True)
 tf_config.gpu_options.allow_growth = True
@@ -104,9 +104,9 @@ def train(model_path, network_architecture, minibatches, type='prodlda', learnin
                                learning_rate=learning_rate,
                                batch_size=batch_size)
         elif type == 'nvlda':
-            vae = nvlda.VAE(network_architecture,
-                            learning_rate=learning_rate,
-                            batch_size=batch_size)
+            vae = nvlda_.VAE(sess, network_architecture,
+                             learning_rate=learning_rate,
+                             batch_size=batch_size)
 
         saver = tf.train.Saver(max_to_keep=3)
         tf.summary.FileWriter('graph', sess.graph)
@@ -163,7 +163,7 @@ def test(model_path, network_architecture, type='prodlda', learning_rate=0.001,
                            learning_rate=learning_rate,
                            batch_size=batch_size)
     elif type == 'nvlda':
-        vae = nvlda.VAE(network_architecture,
+        vae = nvlda_.VAE(None,network_architecture,
                         learning_rate=learning_rate,
                         batch_size=batch_size)
 

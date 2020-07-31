@@ -21,3 +21,4 @@ Blowing in the wind. ===
 # from prodlda import VAE
 # from prodlda_ import VAE
 # from nvlda import VAE
+# from nvlda_ import VAE
