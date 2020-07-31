@@ -30,7 +30,7 @@ class VAE(object):
     See "Auto-Encoding Variational Bayes" by Kingma and Welling for more details.
     """
 
-    def __init__(self, network_architecture, transfer_fct=tf.nn.softplus,
+    def __init__(self, sess, network_architecture, transfer_fct=tf.nn.softplus,
                  learning_rate=0.001, batch_size=100):
         self.network_architecture = network_architecture
         # 激活函数 softplus 可看作relu的平滑版
@@ -53,11 +53,12 @@ class VAE(object):
 
         self._create_network()
         self._create_loss_optimizer()
-
-        init = tf.initialize_all_variables()
-
-        self.sess = tf.InteractiveSession()
-        self.sess.run(init)
+        if sess!=None:
+            self.sess = sess
+        # init = tf.initialize_all_variables()
+        #
+        # self.sess = tf.InteractiveSession()
+        # self.sess.run(init)
 
     def _create_network(self):
         self.network_weights = self._initialize_weights(**self.network_architecture)

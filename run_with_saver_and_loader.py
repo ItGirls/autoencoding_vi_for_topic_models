@@ -98,19 +98,18 @@ def train(model_path, network_architecture, minibatches, type='prodlda', learnin
           batch_size=200, training_epochs=100, display_step=5):
     tf.reset_default_graph()
     vae = ''
-    if type == 'prodlda':
-        vae = prodlda_.VAE(network_architecture,
-                           learning_rate=learning_rate,
-                           batch_size=batch_size)
-    elif type == 'nvlda':
-        vae = nvlda.VAE(network_architecture,
-                        learning_rate=learning_rate,
-                        batch_size=batch_size)
-
     with tf.Session(config=tf_config) as sess:
+        if type == 'prodlda':
+            vae = prodlda_.VAE(sess, network_architecture,
+                               learning_rate=learning_rate,
+                               batch_size=batch_size)
+        elif type == 'nvlda':
+            vae = nvlda.VAE(network_architecture,
+                            learning_rate=learning_rate,
+                            batch_size=batch_size)
 
+        saver = tf.train.Saver(max_to_keep=3)
         tf.summary.FileWriter('graph', sess.graph)
-        saver = tf.train.Saver()
         sess.run(tf.global_variables_initializer())
 
         emb = 0
@@ -144,74 +143,39 @@ def train(model_path, network_architecture, minibatches, type='prodlda', learnin
             #     print("Save model checkpoint to {}\n".format(path))
         path = saver.save(sess, model_path)  #
         print("Save model checkpoint to {}\n".format(path))
+
+        print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
+        print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
+        # calcPerp(vae)
+        calcPerp(vae)
+        # calcTopic(vae)
+        calcTopic(vae)
+
         return vae, emb
 
 
 def test(model_path, network_architecture, type='prodlda', learning_rate=0.001,
          batch_size=200):
     tf.reset_default_graph()
-    vae =""
+    vae = ""
     if type == 'prodlda':
-        vae = prodlda_.VAE(network_architecture,
+        vae = prodlda_.VAE(None, network_architecture,
                            learning_rate=learning_rate,
                            batch_size=batch_size)
     elif type == 'nvlda':
         vae = nvlda.VAE(network_architecture,
                         learning_rate=learning_rate,
                         batch_size=batch_size)
-    # saver = tf.train.import_meta_graph(model_path + '.meta')  # 加载图结构
-    # vae = tf.get_default_graph()  # 获取当前图，为了后续训练时恢复变量
 
     with tf.Session(config=tf_config) as sess:
         saver = tf.train.Saver()
         print(model_path)
         saver.restore(sess, model_path)
-        saver.restore(sess, tf.train.latest_checkpoint("checkpoint/"))
-
-        calcPerp1(vae,sess)
-        # calcTopic1(vae,sess)
-
-
-    # graph = tf.get_default_graph()
-    # sess = tf.Session(config=tf_config)
-    # with graph.as_default():
-    #     vae = ""
-    #     if type == 'prodlda':
-    #         vae = prodlda_.VAE(network_architecture,
-    #                            learning_rate=learning_rate,
-    #                            batch_size=batch_size)
-    #     elif type == 'nvlda':
-    #         vae = nvlda.VAE(network_architecture,
-    #                         learning_rate=learning_rate,
-    #                         batch_size=batch_size)
-    #     saver = tf.train.Saver()
-    #     saver.restore(sess, model_path)
-    #     # cost = []
-    #     # for doc in docs_te:
-    #     #     doc = doc.astype('float32')
-    #     #     n_d = np.sum(doc)
-    #     #     c = sess.run((vae.cost), feed_dict={vae.x: np.expand_dims(doc, axis=0), vae.keep_prob: 1.0})
-    #     #     cost.append(c / n_d)
-    #     # print('The approximated perplexity is: ', (np.exp(np.mean(np.array(cost)))))
-    #
-    #     emb = sess.run(vae.network_weights['weights_gener']['h2'])
-    #     print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
-    #     calcPerp(vae)
-    #     calcTopic(vae)
-    #
-    # with tf.Session() as sess:
-    #     saver = tf.train.import_meta_graph(model_path + ".meta")
-    #     saver.restore(sess, model_path)
-    #     vae = tf.get_default_graph()
-    #     # ave.get_tensor_by_name("topic_word")
-    #     # calcPerp(ave)
-    #     # calcTopic(ave)
-    #     vae_z= vae.get_tensor_by_name("z:0")
-    #     cost = []
-    #     for doc in docs_te:
-    #         doc = doc.astype('float32')
-    #         topic = sess.run((vae_z), feed_dict={vae.x: np.expand_dims(doc, axis=0), vae.keep_prob: 1.0})
-    #     print('The approximated perplexity is: ', (np.exp(np.mean(np.array(cost)))))
+        # saver.restore(sess, tf.train.latest_checkpoint("checkpoint/"))
+        emb = sess.run(vae.network_weights['weights_gener']['h2'])
+        print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
+        calcPerp1(vae, sess)
+        calcTopic1(vae, sess)
 
 
 def print_top_words(beta, feature_names, n_top_words=10):
@@ -248,14 +212,15 @@ def calcTopic(model):
         print('The topic distribution is: ', theta_)
         break
 
-def calcPerp1(model,sess):
+
+def calcPerp1(model, sess):
     # count = 0
     cost = []
     for doc in docs_te:
         doc = doc.astype('float32')
         n_d = np.sum(doc)
         # print(n_d)
-        c = model.test1(doc,sess)
+        c = model.test1(doc, sess)
         # if count ==0:
         #     theta_ = model.topic_prop(doc)
         #     print(theta_)
@@ -263,14 +228,16 @@ def calcPerp1(model,sess):
         cost.append(c / n_d)
     print('The approximated perplexity is: ', (np.exp(np.mean(np.array(cost)))))
 
-def calcTopic1(model,sess):
+
+def calcTopic1(model, sess):
     # count = 0
     cost = []
     for doc in docs_te:
         doc = doc.astype('float32')
-        theta_ = model.topic_prop1(doc,sess)
+        theta_ = model.topic_prop1(doc, sess)
         print('The topic distribution is: ', theta_)
         break
+
 
 def main(argv):
     """
@@ -360,18 +327,11 @@ def main(argv):
         # 2.训练模型
         vae, emb = train(model_path, network_architecture, minibatches, m, training_epochs=e, batch_size=batch_size,
                          learning_rate=learning_rate)
-        print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
-        print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
-        calcPerp(vae)
-        calcPerp(vae)
-        calcTopic(vae)
-        calcTopic(vae)
+
     elif train_or_test == "test":
         # 二、测试
         print("start testing...")
         test(model_path, network_architecture, m, learning_rate=learning_rate, batch_size=batch_size)
-
-        # print(zip(*sorted(vocab.items(), key=lambda x: x[1])))
 
 
 if __name__ == "__main__":
