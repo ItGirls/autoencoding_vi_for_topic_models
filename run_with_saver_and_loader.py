@@ -33,7 +33,7 @@ dataset_te = 'data/20news_clean/test.txt.npy'
 data_te = np.load(dataset_te, allow_pickle=True, encoding="latin1")
 # 词库
 vocab = 'data/20news_clean/vocab.pkl'
-vocab = pickle.load(open(vocab, 'r'))
+vocab = pickle.load(open(vocab, 'rb'))
 # print(vocab)
 vocab_size = len(vocab)
 print("the number of words in vocab is ", vocab_size)
@@ -119,7 +119,8 @@ def train(model_path, network_architecture, minibatches, type='prodlda', learnin
             total_batch = int(n_samples_tr / batch_size)
             # Loop over all batches
             for i in range(total_batch):
-                batch_xs = minibatches.next()
+                batch_xs = next(minibatches)
+                # batch_xs = minibatches.next()
                 # Fit training using batch data
                 cost, emb = vae.partial_fit(batch_xs)
                 # Compute average loss
@@ -144,8 +145,12 @@ def train(model_path, network_architecture, minibatches, type='prodlda', learnin
         path = saver.save(sess, model_path)  #
         print("Save model checkpoint to {}\n".format(path))
 
-        print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
-        print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
+        sorted_vocabs = sorted(vocab.items(), key=lambda x: x[1])
+        print_top_words(emb, list(map(lambda x: x[0], sorted_vocabs)))
+        print_top_words(emb, list(map(lambda x: x[0], sorted_vocabs)))
+
+        # print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
+        # print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
         # calcPerp(vae)
         calcPerp(vae)
         # calcTopic(vae)
@@ -173,7 +178,9 @@ def test(model_path, network_architecture, type='prodlda', learning_rate=0.001,
         saver.restore(sess, model_path)
         # saver.restore(sess, tf.train.latest_checkpoint("checkpoint/"))
         emb = sess.run(vae.network_weights['weights_gener']['h2'])
-        print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
+        sorted_vocabs = sorted(vocab.items(), key=lambda x: x[1])
+        print_top_words(emb, list(map(lambda x:x[0],sorted_vocabs)))
+        # print_top_words(emb, zip(*sorted(vocab.items(), key=lambda x: x[1]))[0])
         calcPerp1(vae, sess)
         calcTopic1(vae, sess)
 
@@ -249,6 +256,12 @@ def main(argv):
     -e 80    # number of epochs to train(epoch大小)
     -r 0.002 # learning rate(学习率)
     """
+
+    # minibatches = create_minibatch(docs_tr.astype('float32'))
+    # print(minibatches.next())
+    # for data in minibatches:
+    #     print(data)
+    #     break
     m = ''
     f = ''
     s = ''

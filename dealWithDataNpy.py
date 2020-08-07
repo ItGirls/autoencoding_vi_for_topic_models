@@ -25,7 +25,7 @@ from run import onehot
 
 dataset_tr = 'data/20news_clean/test.txt.npy'
 vocab = 'data/20news_clean/vocab.pkl'
-vocab = pickle.load(open(vocab, 'r'))
+vocab = pickle.load(open(vocab, 'rb'))
 # print(vocab)
 vocab_size = len(vocab)
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ dataset_te = 'data/20news_clean/test.txt.npy'
 data_te = np.load(dataset_te, allow_pickle=True, encoding="latin1")
 # 词库
 vocab = 'data/20news_clean/vocab.pkl'
-vocab = pickle.load(open(vocab, 'r'))
+vocab = pickle.load(open(vocab, 'rb'))
 # print(vocab)
 vocab_size = len(vocab)
 print("the number of words in vocab is ", vocab_size)
